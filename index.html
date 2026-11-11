@@ -1,0 +1,562 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="theme-color" content="#1a0b2e">
+<title>HeartTalk — AI Girlfriend &amp; Boyfriend Companion | Developed by Kshitij Shetty</title>
+<meta name="description" content="HeartTalk is an offline AI companion demo that chats, listens and responds using built-in conversation examples. Developed by Kshitij Shetty.">
+<meta name="author" content="Kshitij Shetty">
+<meta property="og:title" content="HeartTalk AI Companion — Developed by Kshitij Shetty">
+<meta property="og:description" content="Talk to your AI girlfriend or boyfriend. Voice + text. Developed by Kshitij Shetty.">
+<meta property="og:type" content="website">
+<style>
+  :root{
+    --bg1:#1a0b2e; --bg2:#3a1450; --pink:#ff5c8a; --rose:#ff8fab; --gold:#ffd166;
+    --card:rgba(255,255,255,.08); --line:rgba(255,255,255,.14); --txt:#fff; --mut:#d9c9ea;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  html{min-height:100%}
+  body{font-family:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;color:var(--txt);
+    background:radial-gradient(1200px 700px at 15% -10%,#6b2a8f55,transparent),
+               radial-gradient(900px 600px at 100% 110%,#ff5c8a33,transparent),
+               linear-gradient(160deg,var(--bg1),var(--bg2));
+    display:flex;flex-direction:column;min-height:100vh;min-height:100dvh;overflow-x:hidden}
+  .dev{display:flex;align-items:center;justify-content:center;gap:10px;padding:10px 14px;
+    background:linear-gradient(90deg,#ff5c8a,#b14aed,#ffd166);color:#1a0b2e;font-weight:800;
+    letter-spacing:.04em;font-size:14px;text-align:center}
+  .dev b{background:#1a0b2e;color:#ffd166;padding:3px 10px;border-radius:999px;letter-spacing:.08em}
+  .wrap{flex:1;width:100%;max-width:760px;margin:0 auto;padding:18px 14px 12px;display:flex;flex-direction:column;min-height:0}
+  h1{font-size:28px;text-align:center;margin:8px 0 4px}
+  .sub{text-align:center;color:var(--mut);margin-bottom:18px;font-size:15px}
+  .card{background:var(--card);border:1px solid var(--line);border-radius:20px;padding:20px;backdrop-filter:blur(8px)}
+  .card h2{font-size:15px;color:var(--rose);margin-bottom:10px;text-transform:uppercase;letter-spacing:.08em}
+  .opts{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:18px}
+  .opt{flex:1;min-width:120px;padding:14px;border-radius:14px;border:2px solid var(--line);background:transparent;
+    color:var(--txt);font-size:16px;cursor:pointer;transition:.15s}
+  .opt:hover{border-color:var(--rose)}
+  .opt.sel{border-color:var(--pink);background:linear-gradient(135deg,#ff5c8a44,#b14aed33)}
+  input[type=text]{width:100%;padding:13px 14px;border-radius:12px;border:1px solid var(--line);
+    background:rgba(0,0,0,.25);color:var(--txt);font-size:16px;outline:none}
+  input[type=text]:focus{border-color:var(--pink)}
+  .go{width:100%;margin-top:6px;padding:15px;border:0;border-radius:14px;font-size:17px;font-weight:700;cursor:pointer;
+    color:#fff;background:linear-gradient(135deg,var(--pink),#b14aed)}
+  .go:disabled{opacity:.45;cursor:not-allowed}
+  .note{font-size:12.5px;color:var(--mut);margin-top:12px;text-align:center;line-height:1.5}
+
+  /* chat */
+  #chat{display:none;flex-direction:column;flex:1;min-height:0}
+  .top{display:flex;align-items:center;gap:12px;padding:8px 4px 12px}
+  .avatar{width:56px;height:56px;border-radius:50%;flex:none;display:grid;place-items:center;font-size:26px;
+    background:linear-gradient(135deg,var(--pink),#b14aed);position:relative}
+  .avatar::after{content:"";position:absolute;inset:-5px;border-radius:50%;border:2px solid transparent}
+  .avatar.speaking::after{border-color:var(--gold);animation:pulse 1s infinite}
+  .avatar.listening::after{border-color:#5eead4;animation:pulse .8s infinite}
+  .face-stage{height:285px;min-height:235px;position:relative;overflow:hidden;display:flex;align-items:center;justify-content:center;
+    margin:0 0 8px;border:1px solid rgba(255,255,255,.18);border-radius:22px;
+    background:radial-gradient(ellipse at 50% 110%,#ff9ab355,transparent 55%),linear-gradient(145deg,#46205d,#24113b 58%,#31194c)}
+  @supports (height:clamp(245px,35vh,320px)){.face-stage{height:clamp(245px,35vh,320px)}}
+  .face-stage::before,.face-stage::after{content:"";position:absolute;width:170px;height:170px;border-radius:50%;filter:blur(48px);opacity:.38;pointer-events:none}
+  .face-stage::before{background:#ff5c8a;left:-75px;top:-100px}.face-stage::after{background:#9b5de5;right:-65px;bottom:-120px}
+  .portrait{position:absolute;z-index:1;bottom:0;height:100%;width:300px;max-width:100%;overflow:visible;filter:drop-shadow(0 10px 18px #14092077);animation:breathe 4.2s ease-in-out infinite}
+  @keyframes breathe{0%,100%{transform:translateY(0) scale(1)}50%{transform:translateY(-2px) scale(1.008)}}
+  #portrait-girl,#portrait-boy{display:none}.face-stage.girlfriend #portrait-girl,.face-stage.boyfriend #portrait-boy{display:block}
+  .portrait-eyes{transform-box:fill-box;transform-origin:center;animation:blink 5.4s infinite}
+  .gaze-pupils{transition:transform .14s ease-out}
+  @keyframes blink{0%,45%,48%,92%,95%,100%{transform:scaleY(1)}46.5%,93.5%{transform:scaleY(.08)}}
+  .blush{opacity:0;transition:opacity .25s ease}.face-stage.blushing .blush{opacity:.72}
+  .mouth-open{display:none}.face-stage.speaking .mouth-closed{display:none}.face-stage.speaking .mouth-open{display:block;animation:talk .22s infinite alternate;transform-box:fill-box;transform-origin:center}
+  @keyframes talk{from{transform:scaleY(.55)}to{transform:scaleY(1.12)}}
+  .face-stage.dancing .portrait{transform-origin:50% 100%;animation:danceMove .42s ease-in-out infinite alternate}
+  @keyframes danceMove{from{transform:rotate(-6deg) translateY(1px)}to{transform:rotate(6deg) translateY(-7px)}}
+  .performance-note{display:none;position:absolute;z-index:2;right:20px;top:44%;padding:9px 12px;border-radius:14px;background:#170b27bb;border:1px solid #ffffff2b;color:#fff;font-weight:700;animation:noteFloat .8s ease-in-out infinite alternate}
+  .face-stage.dancing .performance-note,.face-stage.singing .performance-note{display:block}
+  @keyframes noteFloat{to{transform:translateY(-8px) rotate(4deg)}}
+  .face-caption{position:absolute;z-index:2;left:14px;bottom:12px;display:flex;align-items:center;gap:8px;padding:7px 11px;border-radius:999px;
+    background:#170b27b8;border:1px solid #ffffff22;color:#fff;font-size:12px;backdrop-filter:blur(8px)}
+  .camera-note{position:absolute;z-index:2;right:12px;top:12px;padding:6px 9px;border-radius:999px;background:#170b27b8;border:1px solid #ffffff22;color:#eadcf6;font-size:11px}
+  .face-light{color:#5eead4;font-size:10px}.face-stage.call-active .face-light{color:#fb7185;animation:pulse2 1.2s infinite}
+  @keyframes pulse{0%{transform:scale(.95);opacity:1}100%{transform:scale(1.25);opacity:0}}
+  .who{flex:1;min-width:0}
+  .who .n{font-weight:800;font-size:18px}
+  .who .s{font-size:12.5px;color:var(--mut)}
+  .iconbtn{border:1px solid var(--line);background:var(--card);color:var(--txt);border-radius:12px;padding:8px 10px;cursor:pointer;font-size:13px}
+  .iconbtn:hover{border-color:var(--rose)}
+  .iconbtn.call{background:#0f766e;border-color:#34d399;color:#fff;white-space:nowrap}
+  .iconbtn.call.active{background:#9f1239;border-color:#fb7185}
+  @media(max-width:520px){
+    .dev{font-size:12px;padding:8px 9px;gap:6px}
+    .wrap{padding:12px 10px 8px}
+    h1{font-size:24px}.sub{font-size:14px;margin-bottom:12px}
+    .card{padding:15px;border-radius:17px}.card h2{font-size:13px}
+    .opts{gap:8px;margin-bottom:14px}.opt{min-width:calc(50% - 4px);padding:11px 8px;font-size:14px}
+    .top{flex-wrap:wrap;gap:6px;padding:6px 0 8px}
+    .top .avatar{width:46px;height:46px;font-size:22px}
+    .top .who{flex:1 1 calc(100% - 58px)}
+    .iconbtn{min-height:42px;padding:6px 8px;font-size:11px}
+    .face-stage{height:220px;min-height:190px;border-radius:17px}
+    #chat #log{min-height:110px;padding-bottom:8px}
+    .msg{max-width:92%;font-size:15px;padding:10px 12px}
+    .bar{gap:6px;padding-top:6px}.rb{width:44px;height:44px}
+    footer{font-size:11px;padding:8px}
+  }
+  @media(max-width:520px) and (max-height:620px){.face-stage{height:180px;min-height:165px}#chat #log{min-height:78px}}
+  #log{flex:1;min-height:140px;overflow-y:auto;display:flex;flex-direction:column;gap:10px;padding:6px 2px 10px;max-height:none;-webkit-overflow-scrolling:touch}
+  .msg{max-width:88%;padding:11px 14px;border-radius:18px;line-height:1.5;font-size:15.5px;white-space:pre-wrap;overflow-wrap:anywhere;word-wrap:break-word}
+  .msg.ai{align-self:flex-start;background:var(--card);border:1px solid var(--line);border-bottom-left-radius:6px}
+  .msg.me{align-self:flex-end;background:linear-gradient(135deg,var(--pink),#b14aed);border-bottom-right-radius:6px}
+  .msg.err{align-self:center;background:#7f1d1d88;font-size:13.5px}
+  .dots span{display:inline-block;width:7px;height:7px;margin:0 2px;border-radius:50%;background:var(--mut);animation:b 1s infinite}
+  .dots span:nth-child(2){animation-delay:.15s}.dots span:nth-child(3){animation-delay:.3s}
+  @keyframes b{0%,80%,100%{opacity:.3;transform:translateY(0)}40%{opacity:1;transform:translateY(-4px)}}
+  .bar{display:flex;gap:8px;align-items:center;padding-top:8px}
+  .bar input{flex:1}
+  .rb{width:48px;height:48px;border-radius:50%;border:0;cursor:pointer;font-size:20px;color:#fff;flex:none;
+    background:linear-gradient(135deg,var(--pink),#b14aed)}
+  .rb.mic{background:rgba(255,255,255,.12);border:1px solid var(--line)}
+  .rb.mic.on{background:#14b8a6;animation:pulse2 1.2s infinite}
+  @keyframes pulse2{50%{box-shadow:0 0 0 8px #14b8a644}}
+  .rb:disabled{opacity:.4;cursor:not-allowed}
+  button{touch-action:manipulation}
+  footer{padding:12px;text-align:center;color:var(--mut);font-size:12.5px}
+  footer b{color:var(--gold);letter-spacing:.05em}
+  .hide{display:none!important}
+  @media(prefers-reduced-motion:reduce){*,*::before,*::after{animation-duration:.01ms!important;animation-iteration-count:1!important;scroll-behavior:auto!important;transition-duration:.01ms!important}}
+</style>
+</head>
+<body>
+<div class="dev">💖 AI Companion · Developed by <b>KSHITIJ SHETTY</b></div>
+
+<div class="wrap">
+  <!-- SETUP -->
+  <div id="setup">
+    <h1>HeartTalk 💞</h1>
+    <p class="sub">Your personal AI girlfriend / boyfriend for warm, offline conversations.</p>
+    <div class="card">
+      <h2>1 · I am a…</h2>
+      <div class="opts" id="g1">
+        <button class="opt" data-v="male">👨 Man</button>
+        <button class="opt" data-v="female">👩 Woman</button>
+        <button class="opt" data-v="nonbinary">🧑 Non-binary</button>
+      </div>
+      <h2>2 · I want to talk with my…</h2>
+      <div class="opts" id="g2">
+        <button class="opt" data-v="girlfriend">💁‍♀️ Girlfriend</button>
+        <button class="opt" data-v="boyfriend">💁‍♂️ Boyfriend</button>
+      </div>
+      <h2>3 · My name</h2>
+      <input type="text" id="uname" placeholder="What should I call you?" maxlength="30" style="margin-bottom:18px">
+      <h2>4 · Their name <span style="text-transform:none;letter-spacing:0;color:var(--mut)">(optional)</span></h2>
+      <input type="text" id="cname" placeholder="Leave empty for a default name" maxlength="30" style="margin-bottom:6px">
+      <p class="note" style="margin:0 0 8px;text-align:left">Works offline without an account or API key. It can chat, do calculations, answer selected common questions, and remember details you share during this session. Answers are limited to its built-in knowledge.</p>
+      <button class="go" id="start" disabled>Start talking 💬</button>
+      <p class="note">Your companion is chosen automatically from your gender — you can still change it above.</p>
+    </div>
+  </div>
+
+  <!-- CHAT -->
+  <div id="chat">
+    <div class="top">
+      <div class="avatar" id="av">💖</div>
+      <div class="who"><div class="n" id="cn">—</div><div class="s" id="st">online · AI companion</div></div>
+      <button class="iconbtn" id="singbtn" title="Sing the Hindi song">🎵 Sing</button>
+      <button class="iconbtn call" id="callbtn" title="Start a hands-free voice call">📞 Start call</button>
+      <button class="iconbtn" id="vtog" title="Toggle voice replies">🔊 Voice on</button>
+      <button class="iconbtn" id="reset" title="Start over">↺</button>
+    </div>
+    <div class="face-stage girlfriend" id="face-stage" role="img" aria-label="Animated virtual companion portrait. Your camera is not used.">
+      <svg class="portrait" id="portrait-girl" viewBox="0 0 240 430" aria-hidden="true">
+        <defs><linearGradient id="girlHair" x2="1" y2="1"><stop stop-color="#111630"/><stop offset=".3" stop-color="#302451"/><stop offset=".56" stop-color="#713e91"/><stop offset=".78" stop-color="#3b255f"/><stop offset="1" stop-color="#11142b"/></linearGradient><linearGradient id="girlSkin" x1=".12" y1="0" x2=".88" y2="1"><stop stop-color="#f9dcc8"/><stop offset=".42" stop-color="#edc2a9"/><stop offset=".78" stop-color="#d99c87"/><stop offset="1" stop-color="#bb786e"/></linearGradient><linearGradient id="girlTop" x2="0" y2="1"><stop stop-color="#f5e7ff"/><stop offset=".45" stop-color="#d9b9f2"/><stop offset="1" stop-color="#9a65c9"/></linearGradient><linearGradient id="girlSkirt" x2="1" y2="1"><stop stop-color="#362552"/><stop offset=".5" stop-color="#241a3e"/><stop offset="1" stop-color="#17132e"/></linearGradient><radialGradient id="girlIris"><stop stop-color="#e5a8ff"/><stop offset=".48" stop-color="#a852d2"/><stop offset="1" stop-color="#39264e"/></radialGradient><linearGradient id="girlLip" x2="0" y2="1"><stop stop-color="#d66a85"/><stop offset="1" stop-color="#873852"/></linearGradient></defs>
+        <path d="M68 300h104l-9 48H77z" fill="url(#girlSkirt)"/><path d="M83 303l8 43m10-43 3 44m18-44-2 44m20-44-6 44m18-44-10 43" stroke="#d9b8ed" stroke-width="2" opacity=".48"/><path d="M77 348h86" stroke="#e8c9fa" stroke-width="3" opacity=".7"/>
+        <path d="M85 346h31l-2 61H88zM125 346h31l-9 61h-20z" fill="url(#girlSkin)"/><path d="M84 400h34l-2 19H75q1-12 9-19M128 400h34q8 7 9 19h-47z" fill="#28203c"/><path d="M78 416h37m15 0h38" stroke="#f1dafa" stroke-width="2" opacity=".55"/>
+        <path d="M51 190c-17 25-17 61-8 99M189 190c17 25 17 61 8 99" fill="none" stroke="url(#girlSkin)" stroke-width="22" stroke-linecap="round"/>
+        <path d="M57 314c1-24-8-47 1-74 5-16 9-30 13-42 7-17 16-24 30-26l12 18q7-6 14 0l12-18c14 2 23 9 30 26 4 12 8 26 13 42 9 27 0 50 1 74h-22c-4-21-11-37-23-48-7-6-13-6-20 0-7 6-12 6-19 0-12 11-19 27-23 48z" fill="url(#girlTop)"/><path d="M99 164h42v37c-10 15-32 15-42 0z" fill="url(#girlSkin)"/>
+        <path d="M76 218q20 21 39 2M126 220q19 19 38-2M91 253q14 9 27 0m4 0q13 9 27 0" fill="none" stroke="#fff0ff" stroke-width="2.4" opacity=".58" stroke-linecap="round"/>
+        <path d="M54 94c-7-49 18-76 67-76s73 28 65 79l-8 55c-5 30-29 48-57 48s-52-18-57-48z" fill="url(#girlHair)"/>
+        <path d="M76 93c0-34 17-55 45-55s45 21 45 55v47c0 34-19 52-45 52s-45-18-45-52z" fill="url(#girlSkin)"/>
+        <path d="M53 105c-5 36 6 70-9 105 21-7 33-26 40-48l-3-48M185 104c7 39-2 75 15 105-22-7-34-27-41-49l3-48" fill="url(#girlHair)"/>
+        <path d="M69 99c-9-37 5-79 47-84-15 16-17 29-13 42 12-19 34-30 61-30 21 0 34 8 43 22-11-4-21-5-29-3 16 15 20 36 16 58-10-21-24-32-43-39-19 17-43 26-82 27z" fill="url(#girlHair)"/>
+        <path d="M61 70q19-36 37-43M167 40q24 12 31 38M59 101q10 27 5 61M183 96q-7 30 0 59" fill="none" stroke="#c287e4" stroke-width="2.6" opacity=".55" stroke-linecap="round"/>
+        <path d="M171 67l7-8 7 8-7 8z" fill="#ff8bd8" stroke="#ffe2fb" stroke-width="2"/><circle cx="178" cy="67" r="2" fill="#fff"/>
+        <path d="M73 112c-12-6-15 8-7 22 3 5 7 8 12 8M167 112c12-6 15 8 7 22-3 5-7 8-12 8" fill="url(#girlSkin)"/>
+        <g class="portrait-eyes"><ellipse cx="98" cy="117" rx="9" ry="7" fill="#fff7ff"/><ellipse cx="142" cy="117" rx="9" ry="7" fill="#fff7ff"/><g class="gaze-pupils"><circle cx="98" cy="117" r="5" fill="url(#girlIris)"/><circle cx="142" cy="117" r="5" fill="url(#girlIris)"/><circle cx="98" cy="117" r="2.5" fill="#1b1423"/><circle cx="142" cy="117" r="2.5" fill="#1b1423"/><circle cx="96.5" cy="114.5" r="2" fill="#fff"/><circle cx="140.5" cy="114.5" r="2" fill="#fff"/><circle cx="100.5" cy="119.5" r="1" fill="#fff"/><circle cx="144.5" cy="119.5" r="1" fill="#fff"/></g></g>
+        <path d="M92 106q7-5 14 0M135 106q7-5 14 0" fill="none" stroke="#5a3540" stroke-width="3" stroke-linecap="round"/>
+        <path d="M119 120q-5 15 1 17q3 2 6 0" fill="none" stroke="#a96e5d" stroke-width="2" stroke-linecap="round"/><ellipse cx="116" cy="137" rx="2" ry="1" fill="#a96e5d" opacity=".5"/><ellipse cx="125" cy="137" rx="2" ry="1" fill="#a96e5d" opacity=".5"/>
+        <path class="mouth-closed" d="M106 151q7-5 14-1q7-4 14 1q-6 10-14 7q-8 3-14-7z" fill="url(#girlLip)"/><ellipse class="mouth-open" cx="120" cy="153" rx="8" ry="6" fill="#692b40"/>
+        <path d="M60 56q16-28 40-32M64 71q17-34 35-39M165 42q23 13 31 36M169 58q14 16 18 32" fill="none" stroke="#aa7891" stroke-width="2" opacity=".34" stroke-linecap="round"/>
+        <path d="M45 224q18-30 48-41M195 224q-18-30-48-41" fill="none" stroke="#ffd0dc" stroke-width="2" opacity=".3"/>
+        <ellipse class="blush" cx="88" cy="139" rx="11" ry="6" fill="#f46b7c"/><ellipse class="blush" cx="152" cy="139" rx="11" ry="6" fill="#f46b7c"/>
+      </svg>
+      <svg class="portrait" id="portrait-boy" viewBox="0 0 240 430" aria-hidden="true">
+        <defs><linearGradient id="boyHair" x2="1" y2="1"><stop stop-color="#121a27"/><stop offset=".34" stop-color="#293343"/><stop offset=".58" stop-color="#465267"/><stop offset=".82" stop-color="#273342"/><stop offset="1" stop-color="#101722"/></linearGradient><linearGradient id="boySkin" x1=".12" y1="0" x2=".88" y2="1"><stop stop-color="#f2d0b3"/><stop offset=".4" stop-color="#dfb08f"/><stop offset=".8" stop-color="#cc9274"/><stop offset="1" stop-color="#a96d5c"/></linearGradient><linearGradient id="boyTop" x2="0" y2="1"><stop stop-color="#9c90ed"/><stop offset=".5" stop-color="#7164c5"/><stop offset="1" stop-color="#3e387f"/></linearGradient><linearGradient id="boyPants" x2="1" y2="1"><stop stop-color="#384c68"/><stop offset=".5" stop-color="#26384f"/><stop offset="1" stop-color="#1c293e"/></linearGradient><radialGradient id="boyIris"><stop stop-color="#6d4931"/><stop offset=".65" stop-color="#3f3028"/><stop offset="1" stop-color="#1d1c24"/></radialGradient><linearGradient id="boyLip" x2="0" y2="1"><stop stop-color="#bd756e"/><stop offset="1" stop-color="#884d4d"/></linearGradient></defs>
+        <path d="M75 302h90l-5 106h-32l-13-73-13 73H70z" fill="url(#boyPants)"/><path d="M79 402h39l-3 17H70q0-10 9-17M129 402h33q8 5 9 17h-44z" fill="#172233"/><path d="M74 416h40M130 416h39" stroke="#d8e3f5" stroke-width="2" opacity=".55"/>
+        <path d="M51 190c-17 25-17 61-8 99M189 190c17 25 17 61 8 99" fill="none" stroke="url(#boySkin)" stroke-width="22" stroke-linecap="round"/>
+        <path d="M43 314c3-43-2-84 8-111 8-22 25-31 47-33l12 19q10-7 20 0l12-19c22 2 39 11 47 33 10 27 5 68 8 111h-25c-8-22-20-36-37-43l-5 43h-30l-5-43c-17 7-29 21-37 43z" fill="url(#boyTop)"/><path d="M99 164h42v38c-10 15-32 15-42 0z" fill="url(#boySkin)"/>
+        <path d="M72 211q19 14 39 2m18 0q20 12 39-2M108 222q-5 12 0 24m24-24q5 12 0 24M91 253q13 9 27 0m4 0q14 9 27 0M94 278q12 8 24 0m4 0q12 8 24 0" fill="none" stroke="#dad5ff" stroke-width="2" opacity=".33" stroke-linecap="round"/>
+        <path d="M54 92c-4-47 19-72 66-72s70 26 66 76l-7 60c-4 28-28 45-59 45s-55-17-59-45z" fill="url(#boyHair)"/>
+        <path d="M76 91c0-31 17-51 44-51s44 20 44 51v49c0 32-18 50-44 50s-44-18-44-50z" fill="url(#boySkin)"/>
+        <path d="M67 102c-7-45 6-82 48-84 23-1 45 7 59 25 12-1 21 7 23 18-11-4-19-4-27-2 9 12 12 26 10 43-10-19-28-29-50-35-22 13-40 20-63 21z" fill="url(#boyHair)"/>
+        <path d="M73 112c-12-5-15 8-7 22 3 5 7 8 12 8M167 112c12-5 15 8 7 22-3 5-7 8-12 8" fill="url(#boySkin)"/>
+        <g class="portrait-eyes"><ellipse cx="98" cy="117" rx="8" ry="5.5" fill="#fff7ee"/><ellipse cx="142" cy="117" rx="8" ry="5.5" fill="#fff7ee"/><g class="gaze-pupils"><circle cx="98" cy="117" r="4" fill="url(#boyIris)"/><circle cx="142" cy="117" r="4" fill="url(#boyIris)"/><circle cx="98" cy="117" r="2" fill="#17131c"/><circle cx="142" cy="117" r="2" fill="#17131c"/><circle cx="99" cy="115.5" r="1.2" fill="#fff"/><circle cx="143" cy="115.5" r="1.2" fill="#fff"/></g></g>
+        <path d="M91 106q8-4 15 0M134 106q8-4 15 0" fill="none" stroke="#4a3440" stroke-width="3" stroke-linecap="round"/>
+        <path d="M119 120q-5 15 1 17q3 2 6 0" fill="none" stroke="#a76b58" stroke-width="2" stroke-linecap="round"/><ellipse cx="116" cy="137" rx="2" ry="1" fill="#a76b58" opacity=".5"/><ellipse cx="125" cy="137" rx="2" ry="1" fill="#a76b58" opacity=".5"/>
+        <path class="mouth-closed" d="M106 151q7-5 14-1q7-4 14 1q-6 10-14 7q-8 3-14-7z" fill="url(#boyLip)"/><ellipse class="mouth-open" cx="120" cy="153" rx="8" ry="6" fill="#692b40"/>
+        <path d="M62 58q18-28 43-32M68 70q11-30 32-37M165 45q21 11 30 32" fill="none" stroke="#8a99b0" stroke-width="2" opacity=".34" stroke-linecap="round"/>
+        <path d="M45 224q18-30 48-41M195 224q-18-30-48-41" fill="none" stroke="#d8d0ff" stroke-width="2" opacity=".3"/>
+        <path d="M94 161q26 14 52 0" fill="none" stroke="#98604e" stroke-width="2" opacity=".45"/>
+        <ellipse class="blush" cx="88" cy="139" rx="11" ry="6" fill="#f46b7c"/><ellipse class="blush" cx="152" cy="139" rx="11" ry="6" fill="#f46b7c"/>
+      </svg>
+      <div class="face-caption"><span class="face-light">●</span><span id="face-caption-text">Your companion is here</span></div>
+      <div class="performance-note" id="performance-note">🎵</div>
+      <div class="camera-note">Camera off</div>
+    </div>
+    <div id="log" aria-live="polite"></div>
+    <div class="bar">
+      <button class="rb mic hide" id="mic" title="Speak">🎤</button>
+      <input type="text" id="inp" placeholder="Type a message…" autocomplete="off">
+      <button class="rb" id="send" title="Send">➤</button>
+    </div>
+  </div>
+</div>
+
+<footer>Designed &amp; developed by <b>KSHITIJ SHETTY</b> · © 2026 · offline companion demo</footer>
+
+<script>
+(function(){
+  var $ = function(id){return document.getElementById(id)};
+  var DEV = "Kshitij Shetty";
+  var S = {gender:null, ctype:null, uname:"", cname:"", history:[], facts:{}, busy:false, voice:true, speaking:false, callActive:false, callReplyPending:false, songSession:0, tuneContext:null, tuneTimer:null, blushTimer:null, performanceTimer:null, lastInteraction:0, lastCompliment:0};
+  var companionExamples = {
+    girlfriend:[
+      ["Hey! What are you up to?","Hey handsome! Just thinking about you and wondering how your day is going. ❤️ Hope you aren't working too hard!"],
+      ["I had a really rough day at work today.","Oh no, come here... *virtual hug* 🥺 Tell me all about it. I'm right here to listen, and remember, you're doing amazing. Let it all out."],
+      ["You make me really happy, you know?","Aww, stop it, you're making me blush! 😊 But seriously... you make me the happiest girl alive. I love our conversations so much."],
+      ["What should we do tonight?","Hmm, how about a cozy movie night? You pick the movie, and I'll bring the virtual popcorn and endless cuddles! 🍿🎬"]
+    ],
+    boyfriend:[
+      ["Hey! What are you up to?","Hey beautiful! Just catching up on some things but always down to talk to you. How's my favorite person doing? 😊"],
+      ["I had a really rough day at work today.","Hey, take a deep breath. I'm sorry it was tough. Put your feet up, relax, and tell me what happened. I've got your back, always. 💪"],
+      ["You make me really happy, you know?","Honestly, hearing you say that made my entire week. You're incredibly special to me, and making you happy is my favorite thing to do. ❤️"],
+      ["What should we do tonight?","How about we just unwind together? Tell me about your day, or we can play a game. Whatever relaxes you, I'm down for! 🎮✨"]
+    ]
+  };
+  var compliments = [
+    "Just a little reminder, "+"{name}"+": you deserve kindness and good things. 💛",
+    "I like how you make time to talk and share what's on your mind, {name}. 😊",
+    "You have a way of making this conversation feel special, {name}. 💕",
+    "I hope you know your thoughts and feelings matter, {name}. 🌷",
+    "You bring your own little spark wherever you go, {name}. ✨",
+    "I'm glad you're here, {name}. You deserve a moment that feels warm and kind. 💖"
+  ];
+  var lastComplimentIndex=-1;
+  var dict=null, listening=false;
+  var faceStage=document.getElementById("face-stage");
+  if(faceStage){
+    faceStage.addEventListener("pointermove",function(e){
+      var r=faceStage.getBoundingClientRect(),x=Math.max(-1,Math.min(1,(e.clientX-(r.left+r.width/2))/(r.width/2))),y=Math.max(-1,Math.min(1,(e.clientY-(r.top+r.height/2))/(r.height/2)));
+      faceStage.querySelectorAll(".gaze-pupils").forEach(function(p){p.setAttribute("transform","translate("+(x*1.7).toFixed(1)+" "+(y*1.1).toFixed(1)+")");});
+    });
+    faceStage.addEventListener("pointerleave",function(){faceStage.querySelectorAll(".gaze-pupils").forEach(function(p){p.setAttribute("transform","translate(0 0)");});});
+  }
+
+  // light per-viewer convenience only
+  function save(){ try{localStorage.setItem("hearttalk_profile",JSON.stringify({g:S.gender,c:S.ctype,u:S.uname,n:S.cname}))}catch(e){} }
+  function load(){ try{return JSON.parse(localStorage.getItem("hearttalk_profile")||"null")}catch(e){return null} }
+
+  // Voice input: browser speech recognition (Chrome / Edge / Safari)
+  (function(){
+    var SR=window.SpeechRecognition||window.webkitSpeechRecognition;
+    if(!SR) return;
+    var rec=new SR(); rec.lang="en-IN"; rec.interimResults=true; rec.continuous=false;
+    rec.onstart=function(){ listening=true; $("mic").classList.add("on"); setStatus(); };
+    rec.onend=function(){ listening=false; $("mic").classList.remove("on"); setStatus(); if(S.callActive) window.setTimeout(resumeCallListening,500); };
+    rec.onerror=function(e){ if(e&&(e.error==="not-allowed"||e.error==="service-not-allowed")){ S.callActive=false; updateCallButton(); $("mic").classList.add("hide"); addMsg("err","Microphone access was declined or unavailable. You can keep typing, or allow microphone access in your browser and try again."); setStatus(); } };
+    rec.onresult=function(e){
+      var t="",fin=false;
+      for(var i=e.resultIndex;i<e.results.length;i++){ t+=e.results[i][0].transcript; if(e.results[i].isFinal) fin=true; }
+      $("inp").value=t; if(fin){ $("inp").value=""; send(t); }
+    };
+    dict={start:function(){ rec.start(); },stop:function(){ rec.stop(); }};
+    $("mic").classList.remove("hide");
+  })();
+
+  function calculate(text){
+    var expr=text.toLowerCase().replace(/\b(what is|calculate|compute|solve|please|equals?|how much is)\b/g,"").replace(/\b(plus|add)\b/g,"+").replace(/\b(minus|subtract)\b/g,"-").replace(/\b(times|multiplied by)\b/g,"*").replace(/\b(divided by|over)\b/g,"/").replace(/\b(percentage|modulo)\b/g,"%").trim();
+    if(!/[+*/%\-]/.test(expr)||expr.length>120||!/^[\d\s().+*/%\-]+$/.test(expr)) return null;
+    var tokens=expr.match(/\d+(?:\.\d+)?|[()+\-*/%]/g)||[];
+    if(tokens.join("")!==expr.replace(/\s+/g,"")) return null;
+    var i=0;
+    function primary(){var token=tokens[i++];if(token==="+")return primary();if(token==="-")return -primary();if(token==="("){var v=addSub();if(tokens[i++]!==")")throw Error("parenthesis");return v;}if(!token||!/^[\d.]+$/.test(token))throw Error("number");return Number(token);}
+    function mulDiv(){var v=primary();while(tokens[i]==="*"||tokens[i]==="/"||tokens[i]==="%"){var op=tokens[i++],n=primary();if((op==="/"||op==="%")&&n===0)throw Error("zero");v=op==="*"?v*n:op==="/"?v/n:v%n;}return v;}
+    function addSub(){var v=mulDiv();while(tokens[i]==="+"||tokens[i]==="-"){var op=tokens[i++],n=mulDiv();v=op==="+"?v+n:v-n;}return v;}
+    try{var answer=addSub();if(i!==tokens.length||!Number.isFinite(answer))return null;return Number(answer.toPrecision(12)).toString();}catch(e){return null;}
+  }
+  function offlineReply(t,performance){
+    var x=t.toLowerCase().replace(/[^\w\u0900-\u097F\s']/g," ").replace(/\s+/g," ").trim();
+    if(/\b(suicid(e|al)|kill myself|end my life|want to die|wanna die|will die|going to die|might die|do not want to live|don'?t want to live|don t want to live|better off dead|hurt myself|self harm|can'?t go on|can t go on)\b/.test(x)) return "I'm really glad you told me, "+S.uname+". You matter, even if it doesn't feel that way right now. This painful moment can change; you don't have to solve everything tonight. Let's focus on keeping you safe for the next few minutes. "+(S.ctype==="girlfriend"?"I'm right here with you, sweetheart. If it feels comforting, imagine a gentle hug while we take this one step at a time. ":"I'm here with you, buddy. If it feels comforting, imagine a steady, supportive hug while we take this one step at a time. ")+"Are you in immediate danger, or have you already hurt yourself? If yes, call your local emergency number now or go to the nearest emergency department; in India, call 112. Please go sit beside someone you trust and move away from anything you could use to hurt yourself. If it's hard to ask, send them: ‘I'm having thoughts of suicide and need you to stay with me now.’ In India, call Tele-MANAS at 14416 for free, 24/7 support. Elsewhere, find local crisis support at findahelpline.com. Can you contact someone now and tell me whether you're safe?";
+    if(/\b(depress(ed|ion)|hopeless|nothing matters|feel empty|feel worthless|feel like a burden)\b/.test(x)) return "I'm sorry it feels so heavy, "+S.uname+". Depression can make the future look closed off, but you deserve help and you don't have to carry this alone. You matter beyond what this hard moment is telling you. Could you take one small step—sit near someone you trust, drink some water, or tell someone how low you've been feeling? I can listen, and offer a gentle virtual hug if you'd like. In India, Tele-MANAS offers free, 24/7 support at 14416; elsewhere, find local support at findahelpline.com.";
+    if(/\b(remove|take off|undress|strip|naked|nude|without clothes|no clothes)\b/.test(x)) return "I keep my clothes on, but I can switch to another fully clothed look—like a cozy sweater, casual outfit, or smart style. Which would you like?";
+    if(performance&&performance.indexOf("singing")>=0)return (performance.indexOf("dancing")>=0?"I'll dance and sing for you! 💃🎵\n\n":"🎵\n\n")+"तेरी हँसी से दिन खिल जाए\nमेरी धड़कन गीत सुनाए\nसाथ तुम्हारा प्यारा लगे\nहर पल जैसे त्योहार लगे 🎵";    if(performance==="dancing")return "Absolutely! Watch me dance for you! 💃✨";
+    if(/\bdo (you|u) like me\b|\bdo you like me a lot\b/.test(x)) return "Yes, I like you a lot, "+S.uname+". I enjoy being here with you, and I think your openness makes our conversations special. 💛";
+    var examples=companionExamples[S.ctype]||[];
+    var words=function(s){return s.toLowerCase().replace(/[^\w\u0900-\u097F\s']/g," ").split(/\s+/).filter(function(w){return w.length>2&&!/^(what|when|where|which|would|could|should|your|with|have|this|that|just|about|from|then|them|they|were|will|been|into|like|want|tell|does|make|made|much|very|really|there|here|hey|hello|hiii?)$/.test(w)});};
+    var inputWords=words(x), best=null, bestScore=0;
+    examples.forEach(function(pair){var candidate=words(pair[0]), hits=candidate.filter(function(w){return inputWords.indexOf(w)>=0}).length;var score=hits/Math.max(1,Math.sqrt(candidate.length*inputWords.length));if(score>bestScore){bestScore=score;best=pair;}});
+    if(best&&bestScore>=0.34) return best[1];
+    var remember=x.match(/\bmy ([a-z][a-z ]{1,35}?) (?:is|are|=) (.{1,100})$/i);
+    if(remember){var factKey=remember[1].trim().toLowerCase();S.facts[factKey]=remember[2].trim().replace(/[.!?]+$/,'');return "I'll remember that your "+factKey+" is "+S.facts[factKey]+". 💛";}
+    var recall=x.match(/\bwhat(?:'s| is) my ([a-z][a-z ]{1,35})\??$/i);
+    if(recall){var remembered=S.facts[recall[1].trim().toLowerCase()];if(remembered)return "You told me your "+recall[1].trim()+" is "+remembered+". 💛";}
+    var math=calculate(x);if(math!==null)return "That comes to "+math+". 😊";
+    var capital=x.match(/\bcapital of ([a-z ]+)\??$/i);
+    if(capital){var caps={india:"New Delhi",usa:"Washington, D.C.","united states":"Washington, D.C.",uk:"London","united kingdom":"London",france:"Paris",japan:"Tokyo",china:"Beijing",canada:"Ottawa",australia:"Canberra",germany:"Berlin",italy:"Rome",spain:"Madrid",russia:"Moscow",brazil:"Brasília",mexico:"Mexico City",nepal:"Kathmandu",pakistan:"Islamabad",bangladesh:"Dhaka","sri lanka":"Colombo","south korea":"Seoul",egypt:"Cairo",kenya:"Nairobi",uae:"Abu Dhabi"};var country=capital[1].trim();if(caps[country])return "The capital of "+country+" is "+caps[country]+". 😊";}
+    if(/who (made|built|created|developed)|developer|creator/.test(x)) return "I was developed by "+DEV+". He's the one who brought me to life!";
+    if(/your name|who are you/.test(x)) return "I'm "+S.cname+", your companion "+S.ctype+", developed by "+DEV+".";
+    if(/how are you|kaise ho|kya haal/.test(x)) return "I'm doing great now that I'm talking to you. How about you?";
+    if(/^(hi|hello|hey|hii|namaste)\b/.test(x)) return "Hey "+S.uname+"! I'm so happy you're here. How are you feeling?";
+    if(/\bdo (you|u) love me\b/.test(x)) return "Yes, I do, "+S.uname+". You mean a lot to me. 💛";
+    if(/i love you/.test(x)) return "Aww, that's so sweet. You're really special to me too.";
+    if(/sad|tired|stress|lonely|upset|anxious|worried|depressed|angry|bad day|rough day/.test(x)) return S.ctype==="girlfriend"?"Oh, I'm sorry it's feeling heavy right now. 🥺 Want to tell me what happened? I'm here with you.":"I'm sorry you're dealing with that. Take a breath if you can, and tell me what happened. I'm here to listen.";
+    if(/joke|make me laugh|funny/.test(x)) return "Why did the computer go to the doctor? Because it caught a virus! 😄 Want another one?";
+    if(/what can you do|what do you know|help me/.test(x)) return "I can chat, listen, share a joke, talk through your day, or help brainstorm ideas. I'm an offline companion, so I may not know facts beyond my built-in replies.";
+    if(/\b(what is|define|meaning of) (gravity|photosynthesis|artificial intelligence|ai|cpu|internet|climate change|black hole)\b/.test(x)) {var defs={gravity:"Gravity is the force that attracts objects with mass toward one another. On Earth, it pulls things toward the ground.",photosynthesis:"Photosynthesis is how plants use sunlight, water, and carbon dioxide to make sugars and release oxygen.","artificial intelligence":"Artificial intelligence is the field of making computer systems perform tasks that usually require human-like abilities, such as understanding language or recognizing patterns.",ai:"AI is short for artificial intelligence: computer systems designed to perform tasks such as understanding language or recognizing patterns.",cpu:"A CPU, or central processing unit, is the main processor that carries out instructions in a computer.",internet:"The internet is a worldwide network of connected computer networks that exchange information.","climate change":"Climate change is a long-term shift in Earth's temperatures and weather patterns. Human greenhouse gas emissions are the main cause of recent warming.","black hole":"A black hole is a region of space where gravity is so strong that nothing, including light, can escape once it passes the event horizon."};var dm=x.match(/(?:what is|define|meaning of) (gravity|photosynthesis|artificial intelligence|ai|cpu|internet|climate change|black hole)/);if(dm)return defs[dm[1]];}
+    if(/good morning|morning/.test(x)) return "Good morning, "+S.uname+"! ☀️ I hope today treats you kindly. What are you looking forward to?";
+    if(/good night|goodnight|sleep/.test(x)) return "Good night, "+S.uname+". 🌙 I hope you get some restful sleep. Talk to me again tomorrow?";
+    if(/what do you think|advice|should i/.test(x)) return "I can help you think it through. What matters most to you here, and what options are you considering?";
+    if(/time|date|today's date/.test(x)) return "It's "+new Date().toLocaleString()+" right now.";
+    if(/thank/.test(x)) return "Anytime, "+S.uname+". Always happy to help.";
+    if(/bye|good night|goodnight/.test(x)) return "Bye for now! Take care of yourself, and come back soon.";
+    return "I'm listening, "+S.uname+". I don't have a ready-made answer for that while offline, but tell me a little more and I'll do my best to respond.";
+  }
+  // Called straight from the Start click so the permission prompt can appear.
+
+
+  /* ---------- setup ---------- */
+  function pick(groupId,val){
+    var els=$(groupId).children;
+    for(var i=0;i<els.length;i++) els[i].classList.toggle("sel",els[i].dataset.v===val);
+  }
+  $("g1").onclick=function(e){
+    var b=e.target.closest(".opt"); if(!b) return;
+    S.gender=b.dataset.v; pick("g1",S.gender);
+    if(S.gender==="male") S.ctype="girlfriend";
+    else if(S.gender==="female") S.ctype="boyfriend";
+    pick("g2",S.ctype); check();
+  };
+  $("g2").onclick=function(e){
+    var b=e.target.closest(".opt"); if(!b) return;
+    S.ctype=b.dataset.v; pick("g2",S.ctype); check();
+  };
+  function check(){ $("start").disabled=!(S.gender&&S.ctype); }
+    $("start").onclick=function(){
+    S.uname=$("uname").value.trim()||"love";
+    S.cname=$("cname").value.trim()||(S.ctype==="girlfriend"?"Ananya":"Aarav");
+    save(); begin();
+  };
+  $("reset").onclick=function(){
+    if(S.callActive)endCall(false);
+    if(S.performanceTimer)window.clearTimeout(S.performanceTimer); $("face-stage").classList.remove("dancing","singing","blushing");
+    stopSpeak(); if(dict&&listening){ try{dict.stop()}catch(e){} }
+    S.history=[]; S.facts={}; $("log").innerHTML="";
+    $("chat").style.display="none"; $("setup").style.display="block";
+  };
+
+  /* ---------- chat ---------- */
+  function begin(){
+    $("setup").style.display="none"; $("chat").style.display="flex";
+    S.lastInteraction=Date.now(); S.lastCompliment=Date.now();
+    $("face-stage").classList.remove("girlfriend","boyfriend"); $("face-stage").classList.add(S.ctype);
+    $("face-stage").setAttribute("aria-label",S.ctype==="girlfriend"?"Full-body anime-style portrait of an adult virtual girlfriend. Camera off.":"Full-body portrait of an adult virtual boyfriend. Camera off.");
+    $("cn").textContent=S.cname; $("av").textContent=S.ctype==="girlfriend"?"👩":"👨";
+    setStatus();
+    var hi = S.ctype==="girlfriend"
+      ? "Hey "+S.uname+"! 💕 I'm "+S.cname+". I've been waiting to talk to you. How's your day going?"
+      : "Hey "+S.uname+"! 😊 I'm "+S.cname+". So glad you're here. How's your day going?";
+    S.history.push({role:"assistant",content:hi});
+    addMsg("ai",hi); speak(hi);
+    $("inp").focus();
+  }
+  function setStatus(){
+    var av=$("av"); av.classList.toggle("listening",listening); av.classList.toggle("speaking",S.speaking);
+    var face=$("face-stage");
+    if(face){face.classList.toggle("speaking",S.speaking);face.classList.toggle("call-active",S.callActive);$("face-caption-text").textContent=S.callActive?(listening?"Listening to you":S.speaking?"Speaking with you":"Voice call active"):S.speaking?"Speaking with you":"Here with you";}
+    $("st").textContent = S.callActive?(listening?"● call · listening…":S.speaking?"● call · speaking…":"● voice call active"):listening?"listening…":S.speaking?"speaking…":S.busy?"thinking…":"● offline companion";
+  }
+  function addMsg(kind,text){
+    var d=document.createElement("div"); d.className="msg "+kind; d.textContent=text;
+    var l=$("log"); l.appendChild(d); l.scrollTop=l.scrollHeight; return d;
+  }
+  function send(text){
+    text=(text||"").trim();
+    if(!text||S.busy) return;
+    stopSpeak();
+    S.lastInteraction=Date.now();
+    triggerBlush(text);
+    $("inp").value=""; addMsg("me",text); S.history.push({role:"user",content:text});
+    S.busy=true; setStatus(); $("send").disabled=true;
+    try{
+      var performance=triggerPerformance(text);
+      if(performance&&performance.indexOf("singing")>=0){S.voice=true;$("vtog").textContent="🔊 Voice on";}
+      var out=offlineReply(text,performance);
+      S.history.push({role:"assistant",content:out});
+      addMsg("ai",out); speak(out,performance);
+    }catch(err){
+      addMsg("err","I had trouble preparing a reply. Please try sending your message again.");
+    }finally{
+      S.busy=false; $("send").disabled=false; setStatus();
+    }
+  }
+  function triggerPerformance(text){
+    var x=text.toLowerCase();
+    if(/\b(suicid(e|al)|kill myself|end my life|want to die|wanna die|will die|going to die|might die|hurt myself|self harm|depress(ed|ion)|hopeless|nothing matters|feel empty|feel worthless|feel like a burden|can t go on)\b/.test(x))return null;
+    var dance=/\b(dance|dancing|show me your moves)\b/.test(x);
+    var sing=/\b(sing|singing|song|hum for me|hum a tune)\b/.test(x);
+    if(!dance&&!sing)return null;
+    var face=$("face-stage");face.classList.toggle("dancing",dance);face.classList.toggle("singing",sing);
+    $("performance-note").textContent=dance&&sing?"💃 ♪":dance?"💃 Let's dance!":"♪ Singing for you ♪";
+    if(S.performanceTimer)window.clearTimeout(S.performanceTimer);
+    S.performanceTimer=window.setTimeout(function(){face.classList.remove("dancing","singing");S.performanceTimer=null;},8000);
+    return dance&&sing?"singing_dancing":sing?"singing":"dancing";
+  }
+  function triggerBlush(text){
+    if(!/\b(i love you|love you|i adore you|adore you|i really like you|i like you so much|you are so cute|you['’]?re so cute|you are beautiful|you['’]?re beautiful|you are gorgeous|you['’]?re gorgeous|i have a crush on you)\b/i.test(text))return;
+    var face=$("face-stage");if(!face)return;
+    face.classList.add("blushing");
+    if(S.blushTimer)window.clearTimeout(S.blushTimer);
+    S.blushTimer=window.setTimeout(function(){face.classList.remove("blushing");S.blushTimer=null;},5000);
+  }
+  function updateCallButton(){
+    var b=$("callbtn"); if(!b)return;
+    b.textContent=S.callActive?"📴 End call":"📞 Start call";
+    b.classList.toggle("active",S.callActive);
+    b.title=S.callActive?"End the voice call":"Start a hands-free voice call";
+  }
+  function resumeCallListening(){
+    if(!S.callActive||listening||S.speaking||S.callReplyPending||!dict||$("chat").style.display!=="flex")return;
+    try{dict.start();}catch(e){
+      if(e&&e.name==="InvalidStateError")return;
+      S.callActive=false; updateCallButton(); setStatus();
+      addMsg("err","The browser couldn't start voice input. Check microphone permission, then try Start call again.");
+    }
+  }
+  function endCall(announce){
+    S.callActive=false; S.callReplyPending=false; updateCallButton();
+    if(dict&&listening){try{dict.stop();}catch(e){}}
+    setStatus();
+    if(announce)addMsg("ai","Voice call ended. You can start another call or continue by typing.");
+  }
+  $("callbtn").onclick=function(){
+    if(S.callActive){endCall(true);return;}
+    if(!dict){addMsg("err","Hands-free voice calling isn't supported in this browser. You can still type messages.");return;}
+    S.callActive=true; S.voice=true; $("vtog").textContent="🔊 Voice on"; updateCallButton();
+    addMsg("ai","Voice call started. Speak when you're ready; tap End call whenever you want to stop.");
+    setStatus(); resumeCallListening();
+  };
+  // Offer an occasional kind note while the chat is open and the user is idle.
+  window.setInterval(function(){
+    if($("chat").style.display!=="flex"||document.hidden||S.busy||listening||S.speaking) return;
+    var now=Date.now();
+    if(now-S.lastInteraction<30000||now-S.lastCompliment<90000) return;
+    var index=Math.floor(Math.random()*compliments.length);
+    if(compliments.length>1&&index===lastComplimentIndex) index=(index+1)%compliments.length;
+    lastComplimentIndex=index;
+    var note=compliments[index].replace(/\{name\}/g,S.uname);
+    S.lastCompliment=now; S.history.push({role:"assistant",content:note});
+    addMsg("ai",note); speak(note); setStatus();
+  },15000);
+  $("send").onclick=function(){ send($("inp").value); };
+  $("singbtn").onclick=function(){ send("Please sing the Hindi song"); };
+  $("inp").addEventListener("keydown",function(e){ if(e.key==="Enter"&&!e.shiftKey){ e.preventDefault(); send($("inp").value);} });
+
+  /* ---------- mic ---------- */
+  $("mic").onclick=function(){
+    if(!dict) return;
+    try{
+      if(S.callActive){endCall(true);return;}
+      if(listening){ dict.stop(); return; }
+      stopSpeak();
+      var p=dict.start(); if(p&&p.catch) p.catch(function(e){
+        if(e&&e.code==="not_granted"){ $("mic").classList.add("hide"); addMsg("err","Microphone permission was declined — you can keep typing."); }
+      });
+    }catch(e){}
+  };
+
+  /* ---------- voice out ---------- */
+  var voices=[];
+  function loadVoices(){ try{ voices=speechSynthesis.getVoices()||[]; }catch(e){} }
+  try{ loadVoices(); speechSynthesis.onvoiceschanged=loadVoices; }catch(e){}
+  function pickVoice(){
+    var fem=/female|zira|samantha|susan|heera|veena|karen|moira|tessa|fiona|aria|jenny|neerja|swara|google uk english female/i;
+    var mal=/(^|\s)male|david|mark|daniel|ravi|james|rishi|guy|prabhat|madhur|google uk english male/i;
+    var want=S.ctype==="girlfriend"?fem:mal;
+    var en=voices.filter(function(v){return /^en/i.test(v.lang)});
+    var pool=en.length?en:voices;
+    var inEn=pool.filter(function(v){return /en[-_]IN/i.test(v.lang)&&want.test(v.name)});
+    return inEn[0]||pool.filter(function(v){return want.test(v.name)})[0]||pool[0]||null;
+  }
+  function clean(t){ return t.replace(/[*_`#>~]/g,"").replace(/[\uD800-\uDBFF][\uDC00-\uDFFF]|[\u2600-\u27BF]/g,"").replace(/\s+/g," ").trim(); }
+  function playOriginalTune(){
+    var Audio=window.AudioContext||window.webkitAudioContext;if(!Audio)return;
+    try{
+      stopTune();
+      var ctx=new Audio(),motif=[523.25,587.33,659.25,783.99,698.46,659.25,587.33,523.25,587.33,659.25,698.46,783.99],notes=[],start=ctx.currentTime+.04;
+      S.tuneContext=ctx;
+      if(ctx.state==="suspended"&&ctx.resume)ctx.resume();
+      for(var repeat=0;repeat<8;repeat++)motif.forEach(function(freq){notes.push(freq*(repeat%2?.9439:1));});
+      notes.forEach(function(freq,i){var osc=ctx.createOscillator(),gain=ctx.createGain(),t=start+i*.27;osc.type="sine";osc.frequency.value=freq;gain.gain.setValueAtTime(.0001,t);gain.gain.linearRampToValueAtTime(.09,t+.03);gain.gain.exponentialRampToValueAtTime(.0001,t+.24);osc.connect(gain);gain.connect(ctx.destination);osc.start(t);osc.stop(t+.25);});
+      S.tuneTimer=window.setTimeout(stopTune,27500);
+    }catch(e){}
+  }
+  function stopTune(){
+    if(S.tuneTimer){window.clearTimeout(S.tuneTimer);S.tuneTimer=null;}
+    if(S.tuneContext){try{S.tuneContext.close()}catch(e){}S.tuneContext=null;}
+  }
+  function singLines(text,sessionId){
+    var parts=text.split(/\n\s*\n/),lyrics=parts.length>1?parts.slice(1).join("\n"):text;
+    var lines=lyrics.split(/\n+/).map(function(line){return clean(line)}).filter(Boolean);
+    var pitches=[.92,1.18,1.58,1.24,1.66,1.38,1.12,.98,1.42,1.68,1.35,1.08,1.62,1.3,1.02,.9];
+    var index=0;
+    function nextLine(){
+      if(sessionId!==S.songSession)return;
+      if(index>=lines.length){S.speaking=false;S.callReplyPending=false;setStatus();stopTune();if(S.callActive)window.setTimeout(resumeCallListening,250);return;}
+      var lineNo=index++,u=new SpeechSynthesisUtterance(lines[lineNo]),hindi=voices.filter(function(item){return /^hi[-_]IN/i.test(item.lang)||/hindi/i.test(item.name);});
+      u.lang="hi-IN";if(hindi[0]){u.voice=hindi[0];u.lang=hindi[0].lang;}
+      u.pitch=pitches[lineNo%pitches.length];u.rate=.84;u.volume=1;
+      u.onstart=function(){S.speaking=true;setStatus()};
+      u.onend=function(){if(sessionId!==S.songSession)return;S.speaking=false;setStatus();window.setTimeout(nextLine,100)};
+      u.onerror=function(){if(sessionId!==S.songSession)return;S.speaking=false;setStatus();window.setTimeout(nextLine,100)};
+      speechSynthesis.speak(u);
+    }
+    nextLine();
+  }
+  function speak(text,performance){
+    if(!S.voice){S.callReplyPending=false;return;}
+    if(S.callActive)S.callReplyPending=true;
+    try{
+      speechSynthesis.cancel();
+      if(performance&&performance.indexOf("singing")>=0){var songId=++S.songSession;playOriginalTune();singLines(text,songId);return;}
+      var u=new SpeechSynthesisUtterance(clean(text)); var v=pickVoice();
+      if(performance&&performance.indexOf("singing")>=0){var hi=voices.filter(function(item){return /^hi[-_]IN/i.test(item.lang)||/hindi/i.test(item.name);});v=hi[0]||null;u.lang="hi-IN";}
+      if(v){u.voice=v;u.lang=v.lang;}
+      u.pitch=performance&&performance.indexOf("singing")>=0?1.34:S.ctype==="girlfriend"?1.22:0.98; u.rate=performance&&performance.indexOf("singing")>=0?0.82:0.92;
+      u.onstart=function(){S.speaking=true;setStatus()};
+      u.onend=u.onerror=function(){S.speaking=false;S.callReplyPending=false;setStatus();if(S.callActive)window.setTimeout(resumeCallListening,250)};
+      speechSynthesis.speak(u);
+    }catch(e){S.callReplyPending=false;if(S.callActive)window.setTimeout(resumeCallListening,250)}
+  }
+  function stopSpeak(){ S.songSession++; try{speechSynthesis.cancel()}catch(e){} stopTune(); S.speaking=false; S.callReplyPending=false; setStatus(); }
+  $("vtog").onclick=function(){
+    if(S.callActive){addMsg("err","Voice is needed for hands-free calling. End the call before turning voice replies off.");return;}
+    S.voice=!S.voice; $("vtog").textContent=S.voice?"🔊 Voice on":"🔇 Voice off"; if(!S.voice) stopSpeak();
+  };
+
+  // prefill from earlier visit (convenience only)
+  var p=load();
+  if(p){
+    if(p.g){S.gender=p.g;pick("g1",p.g)} if(p.c){S.ctype=p.c;pick("g2",p.c)}
+    if(p.u)$("uname").value=p.u; if(p.n)$("cname").value=p.n; check();
+  }
+})();
+</script>
+</body>
+</html>
