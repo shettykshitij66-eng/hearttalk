@@ -106,6 +106,10 @@
   .msg.ai{align-self:flex-start;background:var(--card);border:1px solid var(--line);border-bottom-left-radius:6px}
   .msg.me{align-self:flex-end;background:linear-gradient(135deg,var(--pink),#b14aed);border-bottom-right-radius:6px}
   .msg.err{align-self:center;background:#7f1d1d88;font-size:13.5px}
+  .msg.ai{display:flex;align-items:flex-end;gap:8px}
+  .msg.ai .msg-text{flex:1;min-width:0}
+  .speak-reply{flex:none;width:36px;height:36px;border:1px solid var(--line);border-radius:10px;background:rgba(255,255,255,.08);color:var(--txt);font-size:16px;cursor:pointer;touch-action:manipulation}
+  .speak-reply:focus-visible{outline:2px solid var(--rose);outline-offset:2px}
   .dots span{display:inline-block;width:7px;height:7px;margin:0 2px;border-radius:50%;background:var(--mut);animation:b 1s infinite}
   .dots span:nth-child(2){animation-delay:.15s}.dots span:nth-child(3){animation-delay:.3s}
   @keyframes b{0%,80%,100%{opacity:.3;transform:translateY(0)}40%{opacity:1;transform:translateY(-4px)}}
@@ -383,7 +387,14 @@
     $("st").textContent = S.callActive?(listening?"● call · listening…":S.speaking?"● call · speaking…":"● voice call active"):listening?"listening…":S.speaking?"speaking…":S.busy?"thinking…":"● offline companion";
   }
   function addMsg(kind,text){
-    var d=document.createElement("div"); d.className="msg "+kind; d.textContent=text;
+    var d=document.createElement("div"); d.className="msg "+kind;
+    if(kind==="ai"){
+      var body=document.createElement("span"); body.className="msg-text"; body.textContent=text;
+      var replay=document.createElement("button"); replay.type="button"; replay.className="speak-reply";
+      replay.textContent="🔊"; replay.title="Play this reply aloud"; replay.setAttribute("aria-label","Play this reply aloud");
+      replay.addEventListener("click",function(){S.voice=true;$("vtog").textContent="🔊 Voice on";stopSpeak();speak(text);});
+      d.appendChild(body); d.appendChild(replay);
+    }else d.textContent=text;
     var l=$("log"); l.appendChild(d); l.scrollTop=l.scrollHeight; return d;
   }
   function send(text){
@@ -531,25 +542,44 @@
   }
   function speak(text,performance){
     if(!S.voice){S.callReplyPending=false;return;}
+    var synth=window.speechSynthesis;
+    if(!synth||typeof window.SpeechSynthesisUtterance!=="function"){
+      S.speaking=false;S.callReplyPending=false;setStatus();
+      addMsg("err","This browser does not support voice playback. Try opening HeartTalk in Safari or Chrome.");
+      return;
+    }
     if(S.callActive)S.callReplyPending=true;
     try{
-      speechSynthesis.cancel();
+      if(synth.paused&&synth.resume)synth.resume();
+      loadVoices();
       if(performance&&performance.indexOf("singing")>=0){var songId=++S.songSession;playOriginalTune();singLines(text,songId);return;}
-      var u=new SpeechSynthesisUtterance(clean(text)); var v=pickVoice();
-      if(performance&&performance.indexOf("singing")>=0){var hi=voices.filter(function(item){return /^hi[-_]IN/i.test(item.lang)||/hindi/i.test(item.name);});v=hi[0]||null;u.lang="hi-IN";}
+      var u=new window.SpeechSynthesisUtterance(clean(text)),v=pickVoice();
       if(v){u.voice=v;u.lang=v.lang;}
-      u.pitch=performance&&performance.indexOf("singing")>=0?1.34:S.ctype==="girlfriend"?1.22:0.98; u.rate=performance&&performance.indexOf("singing")>=0?0.82:0.92;
-      u.onstart=function(){S.speaking=true;setStatus()};
-      u.onend=u.onerror=function(){S.speaking=false;S.callReplyPending=false;setStatus();if(S.callActive)window.setTimeout(resumeCallListening,250)};
-      speechSynthesis.speak(u);
-    }catch(e){S.callReplyPending=false;if(S.callActive)window.setTimeout(resumeCallListening,250)}
+      u.pitch=S.ctype==="girlfriend"?1.18:0.98; u.rate=0.94; u.volume=1;
+      u.onstart=function(){S.speaking=true;setStatus();};
+      u.onend=function(){S.speaking=false;S.callReplyPending=false;setStatus();if(S.callActive)window.setTimeout(resumeCallListening,250);};
+      u.onerror=function(event){
+        S.speaking=false;S.callReplyPending=false;setStatus();
+        if(event&&event.error!=="canceled"&&event.error!=="interrupted")addMsg("err","Voice playback failed. Tap the 🔊 on this reply and check your phone's media volume.");
+        if(S.callActive)window.setTimeout(resumeCallListening,250);
+      };
+      synth.speak(u);
+      if(synth.paused&&synth.resume)synth.resume();
+    }catch(e){
+      S.speaking=false;S.callReplyPending=false;setStatus();
+      addMsg("err","Voice playback failed. Tap the 🔊 on this reply and check your phone media volume.");
+      if(S.callActive)window.setTimeout(resumeCallListening,250);
+    }
   }
-  function stopSpeak(){ S.songSession++; try{speechSynthesis.cancel()}catch(e){} stopTune(); S.speaking=false; S.callReplyPending=false; setStatus(); }
+  function stopSpeak(){
+    S.songSession++;
+    try{var synth=window.speechSynthesis;if(synth&&(S.speaking||synth.speaking||synth.pending))synth.cancel();}catch(e){}
+    stopTune(); S.speaking=false; S.callReplyPending=false; setStatus();
+  }
   $("vtog").onclick=function(){
     if(S.callActive){addMsg("err","Voice is needed for hands-free calling. End the call before turning voice replies off.");return;}
     S.voice=!S.voice; $("vtog").textContent=S.voice?"🔊 Voice on":"🔇 Voice off"; if(!S.voice) stopSpeak();
   };
-
   // prefill from earlier visit (convenience only)
   var p=load();
   if(p){
